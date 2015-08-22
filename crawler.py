@@ -38,6 +38,7 @@ def setup_search(browser):
     proceedings_type_wanted = browser.find_element_by_xpath(
         '//*[@id="aspnetForm"]/div[3]/table/tbody/tr[2]/td/table/tbody/tr[2]/td[1]/input'
     )
+    proceedings_type_wanted.click()
     close_search_popup(browser)
     proposer_button = WebDriverWait(browser, 10).until(
         EC.presence_of_element_located((By.XPATH, '//*[@id="ctl00_MainContent_pnlMainForm"]/table/tbody/tr[3]/td/table/tbody/tr/td[1]/table/tbody/tr[12]/td[2]/a/input'))
@@ -125,7 +126,7 @@ def save_proceedings(f, directory, (attributes, content, html_content)):
         idf.write(content.decode('utf-8'))
     with codecs.open(identifier_file + '.html', 'w', 'utf-8') as idf:
         idf.write(html_content.decode('utf-8'))
-    f.write('\n' + ';'.join(map(lambda a: a[1].replace(';', '--'), attributes)).decode('utf-8'))
+    f.write('\n' + ';'.join(map(lambda a: a[1].replace(';', '--').replace('\n', '---'), attributes)).decode('utf-8'))
 
 #browser = webdriver.PhantomJS()
 browser = webdriver.Firefox()
