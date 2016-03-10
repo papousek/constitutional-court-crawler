@@ -109,21 +109,9 @@ def goto_main_page(browser, main_page):
 
 def setup_search(browser):
     browser.get('http://nalus.usoud.cz/Search/Results.aspx')
-
-    proceedings_type_button = find_element_safely(browser, By.XPATH, '//*[@id="ctl00_MainContent_pnlMainForm"]/table/tbody/tr[3]/td/table/tbody/tr/td[1]/table/tbody/tr[5]/td[2]/a/input')
-    proceedings_type_button.click()
-    switch_to_popup(browser)
-    proceedings_type_wanted = find_element_safely(browser, By.XPATH, '//*[@id="aspnetForm"]/div[3]/table/tbody/tr[2]/td/table/tbody/tr[2]/td[1]/input')
-    proceedings_type_wanted.click()
-    close_search_popup(browser)
-
-    proposer_button = find_element_safely(browser, By.XPATH, '//*[@id="ctl00_MainContent_pnlMainForm"]/table/tbody/tr[3]/td/table/tbody/tr/td[1]/table/tbody/tr[12]/td[2]/a/input')
-    proposer_button.click()
-    switch_to_popup(browser)
-    for i in [2, 3]:
-        proposer_wanted = find_element_safely(browser, By.XPATH, '//*[@id="aspnetForm"]/div[3]/table/tbody/tr[2]/td/table/tbody/tr[{}]/td[1]/input'.format(i))
-        proposer_wanted.click()
-    close_search_popup(browser)
+    decision_from_date_input = find_element_safely(browser, By.XPATH, '//*[@id="ctl00_MainContent_decidedFrom"]')
+    decision_from_date_input.click()
+    decision_from_date_input.send_keys('1. 1. 1992')
     search_button = find_element_safely(browser, By.XPATH, '//*[@id="ctl00_MainContent_but_search"]')
     search_button.click()
     wait_for_search_results(browser)
