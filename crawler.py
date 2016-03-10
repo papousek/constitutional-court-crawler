@@ -188,7 +188,10 @@ def save_proceedings(f, directory, (attributes, content, html_content), last_sav
         idf.write(content.decode('utf-8'))
     with codecs.open(identifier_file + '.html', 'w', 'utf-8') as idf:
         idf.write(html_content.decode('utf-8'))
-    f.write('\n' + ';'.join(map(lambda a: re.sub('<[^<]+?>', '', a[1]).replace(';', '--').replace('\n', '---'), attributes)).decode('utf-8'))
+    f.write('\n' + ';'.join(map(
+        lambda a: re.sub('<[^<]+?>', '', a[1]).replace(';', '--').replace('\n', '---'),
+        sorted(attributes, key=lambda x: x[0])
+    )).decode('utf-8'))
     with open(identifier_file + '.save', 'w') as idf:
         idf.write('done')
     return True
@@ -227,7 +230,10 @@ if __name__ == "__main__":
             proceedings = load_proceedings(browser)
             if first:
                 proceedings_attr_size = len(proceedings[0])
-                f.write(';'.join(map(lambda a: a[0].replace(';', '--'), proceedings[0] + [('html_file', ), ('json_file', ), ('txt_file', )])).decode('utf-8'))
+                f.write(';'.join(map(
+                    lambda a: a[0].replace(';', '--'),
+                    sorted(proceedings[0] + [('html_file', ), ('json_file', ), ('txt_file', )], key=lambda x: x[0])
+                )).decode('utf-8'))
                 first = False
             if len(proceedings[0]) != proceedings_attr_size:
                 raise Exception('Proceeding attributes do not match, found {}, expected {}.'.format(len(proceedings[0]), proceedings_attr_size))
