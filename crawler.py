@@ -38,6 +38,12 @@ def parser_init(required=None):
         action='store_true',
         dest='reload',
         help='reload crawling')
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_true',
+        dest='debug'
+    )
     return parser
 
 
@@ -93,12 +99,8 @@ def goto_main_page(browser, main_page):
     if main_page > load_number_of_main_pages(browser):
         raise Exception("Page out of the given range.")
     current = load_main_paging(browser)
-    pages_to_go = main_page - current
-    if pages_to_go < 0:
-        raise Exception("We can go forward only.")
-    for next_page in range(pages_to_go):
-        current = load_main_paging(browser)
-        find_element_safely(browser, By.XPATH, '//*[@id="Content"]/table/tbody/tr[1]/td/table/tbody/tr/td/a[last()]').click()
+    if current != main_page:
+        browser.get('http://nalus.usoud.cz/Search/Results.aspx?page={}'.format(main_page - 1))
         for i in range(WAIT_TIME):
             time.sleep(1)
             if current != load_main_paging(browser):
@@ -209,39 +211,41 @@ def get_last_saved_proceedings(target_file):
 if __name__ == "__main__":
     args = parser_init().parse_args()
     browser = webdriver.Firefox()
-    target_dir = args.output
-    target_file = os.path.join(target_dir, 'data.csv')
+    try:
+        target_dir = args.output
+        target_file = os.path.join(target_dir, 'data.csv')
 
-    if args.clean:
-        shutil.rmtree(target_dir)
+        if args.clean:
+            shutil.rmtree(target_dir)
 
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
 
-    last_proceedings, index_of_last_proceedings = get_last_saved_proceedings(target_file)
+        last_proceedings, index_of_last_proceedings = get_last_saved_proceedings(target_file)
 
-    with codecs.open(target_file, 'a' if os.path.exists(target_file) else 'w', 'utf-8') as f:
-        setup_search(browser)
-        last_proceedings_index = index_of_last_proceedings if args.reload else 0
-        first = index_of_last_proceedings is None
-        proceedings_attr_size = None if last_proceedings is None else len(last_proceedings) - 3
-        while goto_proceedings(browser, last_proceedings_index):
-            print last_proceedings_index
-            proceedings = load_proceedings(browser)
-            if first:
-                proceedings_attr_size = len(proceedings[0])
-                f.write(';'.join(map(
-                    lambda a: a[0].replace(';', '--'),
-                    sorted(proceedings[0] + [('html_file', ), ('json_file', ), ('txt_file', )], key=lambda x: x[0])
-                )).decode('utf-8'))
-                first = False
-            if len(proceedings[0]) != proceedings_attr_size:
-                raise Exception('Proceeding attributes do not match, found {}, expected {}.'.format(len(proceedings[0]), proceedings_attr_size))
-            saved = save_proceedings(f, target_dir, proceedings, last_saved=last_proceedings)
-            if not args.reload and not saved:
-                print ' -- THERE ARE NO NEW PROCEEDINGS'
-                break
-            last_proceedings_index += 1
-            back_to_search_results(browser)
-
-
+        with codecs.open(target_file, 'a' if os.path.exists(target_file) else 'w', 'utf-8') as f:
+            setup_search(browser)
+            last_proceedings_index = index_of_last_proceedings if args.reload else 0
+            first = index_of_last_proceedings is None
+            proceedings_attr_size = None if last_proceedings is None else len(last_proceedings) - 3
+            while goto_proceedings(browser, last_proceedings_index):
+                print last_proceedings_index
+                proceedings = load_proceedings(browser)
+                if first:
+                    proceedings_attr_size = len(proceedings[0])
+                    f.write(';'.join(map(
+                        lambda a: a[0].replace(';', '--'),
+                        sorted(proceedings[0] + [('html_file', ), ('json_file', ), ('txt_file', )], key=lambda x: x[0])
+                    )).decode('utf-8'))
+                    first = False
+                if len(proceedings[0]) != proceedings_attr_size:
+                    raise Exception('Proceeding attributes do not match, found {}, expected {}.'.format(len(proceedings[0]), proceedings_attr_size))
+                saved = save_proceedings(f, target_dir, proceedings, last_saved=last_proceedings)
+                if not args.reload and not saved:
+                    print ' -- THERE ARE NO NEW PROCEEDINGS'
+                    break
+                last_proceedings_index += 1
+                back_to_search_results(browser)
+    finally:
+        if args.debug:
+            raw_input('Press ENTER')
